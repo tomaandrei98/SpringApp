@@ -5,11 +5,18 @@ import com.example.demo.service.UserService;
 import com.example.demo.shared.dto.UserDTO;
 import com.example.demo.ui.model.request.UserDetailsRequestModel;
 import com.example.demo.ui.model.response.ErrorMessages;
+import com.example.demo.ui.model.response.OperationStatusModel;
+import com.example.demo.ui.model.response.RequestOperationName;
 import com.example.demo.ui.model.response.UserRest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.example.demo.ui.model.response.RequestOperationStatus.SUCCESS;
 
 @RestController
 @RequestMapping("users")    // http://localhost:8080/users/
@@ -49,14 +56,58 @@ public class UserController {
         return returnValue;
     }
 
-    @PutMapping
-    public String updateUser() {
-        return "update user was called";
+    @PutMapping(path = "/{id}",
+            consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}
+    )
+    public UserRest updateUser(@RequestBody UserDetailsRequestModel userDetails,
+                             @PathVariable String id) {
+
+        UserRest returnValue = new UserRest();
+
+        UserDTO userDTO = new UserDTO();
+        BeanUtils.copyProperties(userDetails, userDTO);
+
+        UserDTO updatedUser = userService.updateUser(id, userDTO);
+        BeanUtils.copyProperties(updatedUser, returnValue);
+
+        return returnValue;
     }
 
-    @DeleteMapping()
-    public String deleteUser() {
-        return "delete user was called";
+    @DeleteMapping(path = "/{id}",
+            produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}
+    )
+    public OperationStatusModel deleteUser(@PathVariable String id) {
+        OperationStatusModel returnValue = new OperationStatusModel();
+
+        returnValue.setOperationName(RequestOperationName.DELETE.name());
+
+        userService.deleteUser(id);
+
+        returnValue.setOperationResult(SUCCESS.name());
+        return returnValue;
+    }
+
+    @GetMapping(
+            produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}
+    )
+    public List<UserRest> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
+                                   @RequestParam(value = "limit", defaultValue = "25") int limit) {
+        List<UserRest> returnValue = new ArrayList<>();
+
+        if (page > 0) {
+            --page;
+        }
+
+        List<UserDTO> users = userService.getUsers(page, limit);
+
+        for (UserDTO userDTO : users) {
+            UserRest userModel = new UserRest();
+            BeanUtils.copyProperties(userDTO, userModel);
+            returnValue.add(userModel);
+        }
+
+        return returnValue;
     }
 
 }
