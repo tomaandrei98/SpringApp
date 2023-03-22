@@ -1,6 +1,6 @@
 package com.example.demo.service.implementation;
 
-import com.example.demo.UserRepository;
+import com.example.demo.repository.UserRepository;
 import com.example.demo.io.entity.UserEntity;
 import com.example.demo.service.UserService;
 import com.example.demo.shared.Utils;
@@ -29,12 +29,40 @@ public class UserServiceImpl implements UserService {
 
         String publicUserId = utils.generateUserId(30);
         userEntity.setUserId(publicUserId);
-        userEntity.setEncryptedPassword("test");
+        userEntity.setEncryptedPassword(user.getEmail() + "encrypted");
 
         UserEntity storedUserDetails = userRepository.save(userEntity);
 
         UserDTO returnValue = new UserDTO();
         BeanUtils.copyProperties(storedUserDetails, returnValue);
+
+        return returnValue;
+    }
+
+    @Override
+    public UserDTO getUser(String email) {
+        UserEntity userEntity = userRepository.findByEmail(email);
+        if (userEntity == null) {
+            throw new RuntimeException("Username not found");
+        }
+
+        UserDTO returnValue = new UserDTO();
+        BeanUtils.copyProperties(userEntity ,returnValue);
+
+        return returnValue;
+    }
+
+    @Override
+    public UserDTO getUserByUserId(String userId) {
+        UserDTO returnValue = new UserDTO();
+
+        UserEntity userEntity = userRepository.findByUserId(userId);
+
+        if (userEntity == null) {
+            throw new RuntimeException("Username not found");
+        }
+
+        BeanUtils.copyProperties(userEntity, returnValue);
 
         return returnValue;
     }
