@@ -19,7 +19,7 @@ import java.util.List;
 import static com.example.demo.ui.model.response.RequestOperationStatus.SUCCESS;
 
 @RestController
-@RequestMapping("users")    // http://localhost:8080/users/
+@RequestMapping("users")    // http://localhost:8080/mobile-app-ant/users
 public class UserController {
 
     @Autowired
