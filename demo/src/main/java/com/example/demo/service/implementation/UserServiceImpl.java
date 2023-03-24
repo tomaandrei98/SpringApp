@@ -5,8 +5,10 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.io.entity.UserEntity;
 import com.example.demo.service.UserService;
 import com.example.demo.shared.Utils;
+import com.example.demo.shared.dto.AddressDTO;
 import com.example.demo.shared.dto.UserDTO;
 import com.example.demo.ui.model.response.ErrorMessages;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -33,8 +35,16 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Record already exists");
         }
 
-        UserEntity userEntity = new UserEntity();
-        BeanUtils.copyProperties(user, userEntity);
+        for (int i = 0; i < user.getAddresses().size(); i++) {
+            AddressDTO address = user.getAddresses().get(i);
+            address.setUserDetails(user);
+            address.setAddressId(utils.generateAddressId(10));
+            user.getAddresses().set(i, address);
+        }
+
+//        BeanUtils.copyProperties(user, userEntity);
+        ModelMapper modelMapper = new ModelMapper();
+        UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 
         String publicUserId = utils.generateUserId(30);
         userEntity.setUserId(publicUserId);
@@ -42,9 +52,8 @@ public class UserServiceImpl implements UserService {
 
         UserEntity storedUserDetails = userRepository.save(userEntity);
 
-        UserDTO returnValue = new UserDTO();
-        BeanUtils.copyProperties(storedUserDetails, returnValue);
-
+//        BeanUtils.copyProperties(storedUserDetails, returnValue);
+        UserDTO returnValue = modelMapper.map(storedUserDetails, UserDTO.class);
         return returnValue;
     }
 
