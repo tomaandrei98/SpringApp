@@ -72,7 +72,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO getUserByUserId(String userId) {
-        UserDTO returnValue = new UserDTO();
 
         UserEntity userEntity = userRepository.findByUserId(userId);
 
@@ -80,9 +79,8 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Username not found");
         }
 
-        BeanUtils.copyProperties(userEntity, returnValue);
-
-        return returnValue;
+        ModelMapper modelMapper = new ModelMapper();
+        return modelMapper.map(userEntity, UserDTO.class);
     }
 
     @Override
@@ -125,8 +123,8 @@ public class UserServiceImpl implements UserService {
         List<UserEntity> users = usersPage.getContent();
 
         for (UserEntity userEntity : users) {
-            UserDTO userDTO = new UserDTO();
-            BeanUtils.copyProperties(userEntity, userDTO);
+            ModelMapper modelMapper = new ModelMapper();
+            UserDTO userDTO = modelMapper.map(userEntity, UserDTO.class);
             returnValue.add(userDTO);
         }
 

@@ -1,19 +1,20 @@
 package com.example.demo.ui.controller;
 
 import com.example.demo.exceptions.UserServiceException;
+import com.example.demo.service.AddressService;
 import com.example.demo.service.UserService;
+import com.example.demo.shared.dto.AddressDTO;
 import com.example.demo.shared.dto.UserDTO;
 import com.example.demo.ui.model.request.UserDetailsRequestModel;
-import com.example.demo.ui.model.response.ErrorMessages;
-import com.example.demo.ui.model.response.OperationStatusModel;
-import com.example.demo.ui.model.response.RequestOperationName;
-import com.example.demo.ui.model.response.UserRest;
+import com.example.demo.ui.model.response.*;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,15 +27,19 @@ public class UserController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    AddressService addressService;
+
+    @Autowired
+    AddressService addressesService;
+
     @GetMapping(path = "/{id}",
             produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public UserRest getUser(@PathVariable String id) {
-        UserRest returnValue = new UserRest();
-
         UserDTO userDTO = userService.getUserByUserId(id);
-        BeanUtils.copyProperties(userDTO, returnValue);
-
-        return returnValue;
+//        BeanUtils.copyProperties(userDTO, returnValue);
+        ModelMapper modelMapper = new ModelMapper();
+        return modelMapper.map(userDTO, UserRest.class);
     }
 
     @PostMapping(
@@ -106,12 +111,41 @@ public class UserController {
         List<UserDTO> users = userService.getUsers(page, limit);
 
         for (UserDTO userDTO : users) {
-            UserRest userModel = new UserRest();
-            BeanUtils.copyProperties(userDTO, userModel);
+            ModelMapper modelMapper = new ModelMapper();
+            UserRest userModel = modelMapper.map(userDTO, UserRest.class);
+
             returnValue.add(userModel);
         }
 
         return returnValue;
     }
+
+    @GetMapping(path = "/{id}/addresses",
+            produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}
+    )
+    public List<AddressesRest> getUserAddresses(@PathVariable String id) {
+        List<AddressesRest> returnValue = new ArrayList<>();
+
+        List<AddressDTO> addressDTO = addressesService.getAddresses(id);
+
+        if (addressDTO != null && !addressDTO.isEmpty()) {
+            Type listType = new TypeToken<List<AddressesRest>>() {}.getType();
+            returnValue = new ModelMapper().map(addressDTO, listType);
+        }
+
+        return returnValue;
+    }
+
+    @GetMapping(path = "/{userId}/addresses/{addressId}",
+            produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}
+    )
+    public AddressesRest getUserAddress(@PathVariable String addressId) {
+        AddressDTO addressDTO = addressService.getAddress(addressId);
+
+        ModelMapper modelMapper = new ModelMapper();
+
+        return modelMapper.map(addressDTO, AddressesRest.class);
+    }
+
 
 }
